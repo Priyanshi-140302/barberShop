@@ -1,0 +1,74 @@
+/* Booking-Form */
+.booking-form {
+    .booking-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+    }
+
+    .booking-form .form-group {
+        margin-bottom: 20px;
+    }
+
+    .counter-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .counter-box button {
+        background: #f1f1f1;
+        border: none;
+        padding: 6px 10px;
+        cursor: pointer;
+    }
+
+    .input-icon {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f9f9f9;
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+
+    .agent-list {
+        display: flex;
+        gap: 15px;
+    }
+
+    .agent-card {
+        text-align: center;
+        padding: 10px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .agent-card.active {
+        border-color: #d79b5c;
+    }
+
+    .agent-card img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+    }
+
+    .submit-btn {
+        border: 0;
+        box-shadow: none;
+        background-color: #e84545;
+        border-color: var(--accent-color);
+        padding: 8px 20px 10px 20px;
+        border-radius: 7px;
+        color: var(--contrast-color);
+        transition: 0.3s;
+    }
+
+    .submit-btn:hover {
+        color: var(--contrast-color);
+        background:
+            color-mix(in srgb, var(--accent-color), transparent 15%);
+    }
+}
