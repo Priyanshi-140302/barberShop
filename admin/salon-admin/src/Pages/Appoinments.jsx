@@ -1,144 +1,187 @@
-import React, { useState } from 'react';
-import Sidebar from '../Components/Sidebar'
-import Header from '../Components/Header'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../Components/Sidebar';
+import Header from '../Components/Header';
+import { Link } from 'react-router-dom';
+import { io } from "socket.io-client";
+import { FaTrash } from "react-icons/fa";
+
+const socket = io("http://206.189.130.102:5001");
 
 const Appointments = () => {
+  const [appointments, setAppointments] = useState([]);
 
-    const [appoinmentDetail] = useState({
-        upcoming_appointments: [
-            {
-                id: 1,
-                service: 'Haircut - Classic Style',
-                customer_name: 'Riya Sharma',
-                customer_id: 1,
-                appointment_date: '2025-09-05 10:30 AM',
-                barber: 'John',
-                mobile: '9876543210'
-            },
-            {
-                id: 2,
-                service: 'Beard Trim - Wedding Special',
-                customer_name: 'Arjun Patel',
-                customer_id: 2,
-                appointment_date: '2025-09-05 11:15 AM',
-                barber: 'David',
-                mobile: '9876543211'
-            },
-            {
-                id: 3,
-                service: 'Hair Color - Highlight',
-                customer_name: 'Priya Verma',
-                customer_id: 2,
-                appointment_date: '2025-09-05 12:00 PM',
-                barber: 'Alex',
-                mobile: '9876543212'
-            },
-            {
-                id: 4, service: 'Haircut - Classic Style',
-                customer_name: 'Riya Sharma',
-                customer_id: 1,
-                appointment_date: '2025-09-05 10:30 AM',
-                barber: 'John',
-                mobile: '9876543210'
-            },
-            {
-                id: 5,
-                service: 'Beard Trim - Wedding Special',
-                customer_name: 'Arjun Patel',
-                customer_id: 2,
-                appointment_date: '2025-09-05 11:15 AM',
-                barber: 'David',
-                mobile: '9876543211'
-            },
-            {
-                id: 6,
-                service: 'Hair Color - Highlight',
-                customer_name: 'Priya Verma',
-                customer_id: 2,
-                appointment_date: '2025-09-05 12:00 PM',
-                barber: 'Alex',
-                mobile: '9876543212'
-            },
-        ]
+  const fetchAppointments = () => {
+    fetch("http://206.189.130.102:5001/api/v1/admin/appointments/get-appointments")
+      .then(res => res.json())
+      .then(data => {
+        const list = data.appointments || data.data?.appointments || [];
+        if (list.length > 0) {
+          const sorted = list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setAppointments(sorted);
+        } else {
+          setAppointments([]);
+        }
+      })
+      .catch(err => console.error("Error fetching appointments:", err));
+  };
+
+  useEffect(() => {
+    // Fetch initial data
+    fetchAppointments();
+
+    // ✅ Listen for new appointments in real-time
+    socket.on("newAppointment", (newApp) => {
+      console.log("📢 New Appointment Received:", newApp);
+      setAppointments((prev) => [newApp, ...prev]); // prepend new appointment
     });
 
-    return (
-        <>
-            <div className="container-fluid p-0">
-                <div className="appoinment-page">
+    return () => {
+      socket.off("newAppointment");
+    };
+  }, []);
 
-                    {/* Dashboard area start */}
-                    <div className="page__full-wrapper">
+ // ✅ Delete appointment
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this appointment?")) return;
 
-                        {/* App sidebar area start */}
-                        <Sidebar />
-                        {/* App sidebar area end */}
+    try {
+      const res = await fetch(`http://206.189.130.102:5001/api/v1/admin/appointments/delete-appointment/${id}`, {
+        method: "DELETE",
+      });
 
-                        <div className="page__body-wrapper">
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error deleting appointment");
 
-                            {/* App header area start */}
-                            <Header />
-                            {/* App header area end */}
+      // Remove from state
+      setAppointments(prev => prev.filter(app => app._id !== id));
+      alert("Appointment deleted successfully ✅");
+    } catch (err) {
+      console.error("❌ Delete error:", err);
+      alert(err.message);
+    }
+  };
 
-                            {/* App side area start */}
-                            <div className="app__slide-wrapper">
-                                <div className="row">
-                                    <div className="col-xl-12">
-                                        <div className="breadcrumb__wrapper mb-35">
-                                            <div className="breadcrumb__inner">
-                                                <div className="breadcrumb__icon">
-                                                    <i className="flaticon-home"></i>
-                                                </div>
-                                                <div className="breadcrumb__menu">
-                                                    <nav>
-                                                        <ul>
-                                                            <li>
-                                                                <span><Link to="/dashboard">Home</Link></span>
-                                                            </li>
-                                                            <li className="active"><span>Appoinments</span></li>
-                                                        </ul>
-                                                    </nav>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Tables */}
-                                <div className="row g-20">
-                                    {appoinmentDetail.upcoming_appointments.map(app => (
-                                        <div className="col-xl-3 col-lg-6 col-md-6">
-                                            <Link>
-                                                <div className="Expovent__count-item mb-20 hover-card">
-                                                    <div className="Expovent__count-thumb include__bg transition-3"
-                                                        style={{ backgroundImage: `url(assets/img/bg/count-bg.png)` }}></div>
-                                                    <div className="Expovent__count-content w-100">
-                                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                                            <h4 className="card-title fw-bold">{app.customer_name}</h4>
-                                                            <h6 className="text-muted">03-09-2025</h6>
-                                                        </div>
-                                                        <p className="card-text mb-1"><strong>Service:</strong> {app.service}</p>
-                                                        <p className="card-text mb-1"><strong>Barber:</strong> {app.barber}</p>
-                                                        <p className="card-text mb-0"><strong>Time:</strong> {app.appointment_date}</p>
-                                                        <p className="card-text mb-0"><strong>mobile:</strong> {app.mobile}</p>
-                                                    </div>
-                                                    {/* <div className="Expovent__count-icon">
-                                                        <i className="fa-solid fa-users"></i>
-                                                    </div> */}
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            {/* App side area end */}
 
+
+  // ✅ Format date
+  const formatDate = (dateStr, timeStr) => {
+    const today = new Date();
+    const date = new Date(dateStr);
+
+    const todayStr = today.toDateString();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    if (date.toDateString() === todayStr) {
+      return timeStr;
+    } else if (date.toDateString() === yesterdayStr) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+    }
+  };
+
+  return (
+    <>
+      <div className="container-fluid p-0">
+        <div className="appoinment-page">
+          <div className="page__full-wrapper">
+            <Sidebar />
+            <div className="page__body-wrapper">
+              <Header />
+
+              <div className="app__slide-wrapper">
+                <div className="row">
+                  <div className="col-xl-12">
+                    <div className="breadcrumb__wrapper mb-35">
+                      <div className="breadcrumb__inner">
+                        <div className="breadcrumb__icon">
+                          <i className="flaticon-home"></i>
                         </div>
+                        <div className="breadcrumb__menu">
+                          <nav>
+                            <ul>
+                              <li>
+                                <span><Link to="/dashboard">Home</Link></span>
+                              </li>
+                              <li className="active"><span>Appointments</span></li>
+                            </ul>
+                          </nav>
+                        </div>
+                      </div>
                     </div>
+                  </div>
                 </div>
-            </div>
-        </>
-    )
-}
 
-export default Appointments
+                {/* Tables */}
+                <div className="row g-20">
+                  {appointments.length > 0 ? (
+                    appointments.map(app => (
+                      <div key={app._id} className="col-xl-3 col-lg-6 col-md-6">
+                        <Link>
+                          <div className="Expovent__count-item mb-20 hover-card">
+                            <div
+                              className="Expovent__count-thumb include__bg transition-3"
+                              style={{
+                                backgroundImage: `url(assets/img/bg/count-bg.png)`
+                              }}
+                            ></div>
+                            <div className="Expovent__count-content w-100">
+                              <div className="d-flex align-items-center justify-content-between mb-2">
+                                <h4 className="card-title fw-bold">{app.name}</h4>
+                                <h6 className="text-muted">
+                                  {formatDate(app.date, app.time)}
+                                </h6>
+                              </div>
+                              <p className="card-text mb-1">
+                                <strong>Services:</strong>{" "}
+                                {app.serviceIds?.length > 0
+                                  ? app.serviceIds.map(s => s?.name || "N/A").join(", ")
+                                  : "N/A"}
+                              </p>
+                              <p className="card-text mb-1">
+                                <strong>Barber:</strong> {app.barberId?.name || "N/A"}
+                              </p>
+                              <p className="card-text mb-0">
+                                <strong>Time:</strong> {app.time}
+                              </p>
+                              <p className="card-text mb-0">
+                                <strong>Mobile:</strong> {app.mobile}
+                              </p>
+                              <p className="card-text mb-0">
+                                <strong>Status:</strong> {app.status}
+                              </p>
+                                {/* ✅ Delete button */}
+                            <button
+                              onClick={() => handleDelete(app._id)}
+                              className="btn btn-sm btn-danger mt-2"
+                            >
+                              <FaTrash /> Delete
+                            </button>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-12">
+                      <p>No appointments found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Appointments;

@@ -5,6 +5,6 @@ const appointmentController = require('../../controllers/userController/appointm
 
 router.post('/book-appointment', appointmentController.bookAppointment);
 router.post('/get-timeslots', appointmentController.getAvailableSlots);
-router.get('/cancel-appointment/:id', appointmentController.cancelAppointment);
+router.put('/cancel-appointment', appointmentController.cancelAppointment);
 
 module.exports = router;

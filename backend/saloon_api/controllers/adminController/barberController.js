@@ -1,6 +1,34 @@
 const e = require('express');
 const Barber = require('../../models/barberModel');
 
+// exports.createBarber = async (req, res) => {
+//   try {
+//     const { name, experience, specialization, phone, email, timeSlots,date } = req.body;
+
+//     const barberExist = await Barber.findOne({ email });
+//     if (barberExist) {
+//       return res.status(400).json({ message: "Barber already exists" });
+//     }
+
+//     const newBarber = new Barber({
+//       name,
+//       experience,
+//       specialization,
+//       phone,
+//       email,
+//       timeSlots: timeSlots || [] ,// default empty array if not provided
+//       date
+//     });
+
+//     await newBarber.save();
+//     res.status(201).json({ message: "Barber added successfully", barber: newBarber });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: "Failed to add barber", error: error.message });
+//   }
+// };
+
+
 exports.createBarber = async (req, res) => {
   try {
     const { name, experience, specialization, phone, email, timeSlots } = req.body;
@@ -9,15 +37,15 @@ exports.createBarber = async (req, res) => {
     if (barberExist) {
       return res.status(400).json({ message: "Barber already exists" });
     }
-
     const newBarber = new Barber({
       name,
       experience,
       specialization,
       phone,
       email,
-      timeSlots: timeSlots || [] // default empty array if not provided
+    timeSlots: timeSlots || []
     });
+
 
     await newBarber.save();
     res.status(201).json({ message: "Barber added successfully", barber: newBarber });
@@ -27,29 +55,28 @@ exports.createBarber = async (req, res) => {
   }
 };
 
-
 exports.getAllBarbers = async (req, res) => {
-    try {
-        const barbers = await Barber.find();
-        res.status(200).json({ barbers });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Failed to fetch barbers', error: error.message });
-    }
+  try {
+    const barbers = await Barber.find();
+    res.status(200).json({ barbers });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Failed to fetch barbers', error: error.message });
+  }
 }
 
 exports.getBarberById = async (req, res) => {
-    try {
-        const barberId = req.params.id;
-        const barber = await Barber.findById(barberId);
-        if (!barber) {
-            return res.status(404).json({ message: 'Barber not found' });
-        }
-        res.status(200).json({ barber });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Failed to fetch barber', error: error.message });
+  try {
+    const barberId = req.params.id;
+    const barber = await Barber.findById(barberId);
+    if (!barber) {
+      return res.status(404).json({ message: 'Barber not found' });
     }
+    res.status(200).json({ barber });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Failed to fetch barber', error: error.message });
+  }
 }
 
 exports.updateBarber = async (req, res) => {
@@ -71,15 +98,42 @@ exports.updateBarber = async (req, res) => {
 
 
 exports.deleteBarber = async (req, res) => {
-    try {
-        const barberId = req.params.id;
-        const deletedBarber = await Barber.findByIdAndDelete(barberId);
-        if (!deletedBarber) {
-            return res.status(404).json({ message: 'Barber not found' });
-        }
-        res.status(200).json({ message: 'Barber deleted successfully' });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Failed to delete barber', error: error.message });
+  try {
+    const barberId = req.params.id;
+    const deletedBarber = await Barber.findByIdAndDelete(barberId);
+    if (!deletedBarber) {
+      return res.status(404).json({ message: 'Barber not found' });
     }
-}   
+    res.status(200).json({ message: 'Barber deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Failed to delete barber', error: error.message });
+  }
+}
+
+exports.setBarberSlotsByDate = async (req, res) => {
+  try {
+    const { barberId, date, slots } = req.body; // slots = [{ start, end }, ...]
+    if (!barberId || !date || !slots || !slots.length) {
+      return res.status(400).json({ message: "barberId, date, and slots are required" });
+    }
+
+    const barber = await Barber.findById(barberId);
+    if (!barber) return res.status(404).json({ message: "Barber not found" });
+
+    // Check if date already exists
+    const existingDateIndex = barber.timeSlots.findIndex(ts => ts.date === date);
+    if (existingDateIndex >= 0) {
+      // Replace slots for that date
+      barber.timeSlots[existingDateIndex].slots = slots;
+    } else {
+      barber.timeSlots.push({ date, slots });
+    }
+
+    await barber.save();
+    res.json({ message: "Slots set successfully", barber });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to set slots", error: err.message });
+  }
+};

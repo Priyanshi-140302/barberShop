@@ -11,6 +11,4 @@ router.put('/complete-appointment/:id', appointmentController.completeAppointmen
 router.get('/get-appointments', appointmentController.getAllAppointments);
 router.get('/get-appointment/:id', appointmentController.getAppointmentById);
 
-
-
 module.exports = router;

@@ -88,7 +88,7 @@ const Header = () => {
                                                 </li>
                                                 <li>
                                                     <Link to="/appoinments" aria-expanded="false">
-                                                        <i class="fa-solid fa-calendar-check"></i>
+                                                        <i className="fa-solid fa-calendar-check"></i>
                                                         <span className="nav-text">Appoinments</span>
                                                     </Link>
                                                 </li>

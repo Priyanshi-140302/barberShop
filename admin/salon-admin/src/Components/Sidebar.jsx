@@ -31,8 +31,26 @@ const Sidebar = () => {
                             </li>
                             <li>
                                 <Link to="/appoinments" aria-expanded="false">
-                                    <i class="fa-solid fa-calendar-check"></i>
+                                    <i className="fa-solid fa-calendar-check"></i>
                                     <span className="nav-text">Appoinments</span>
+                                </Link>
+                            </li>
+                             <li>
+                                <Link to="/services" aria-expanded="false">
+                                    <i className="fa-solid fa-calendar-check"></i>
+                                    <span className="nav-text">Services</span>
+                                </Link>
+                            </li>
+                             <li>
+                                <Link to="/agents" aria-expanded="false">
+                                    <i className="fa-solid fa-calendar-check"></i>
+                                    <span className="nav-text">Agents</span>
+                                </Link>
+                            </li>
+                             <li>
+                                <Link to="/shop-settings" aria-expanded="false">
+                                    <i className="fa-solid fa-calendar-check"></i>
+                                    <span className="nav-text">Shop-Settings</span>
                                 </Link>
                             </li>
                             <li>

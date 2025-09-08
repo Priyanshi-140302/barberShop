@@ -64,7 +64,7 @@ exports.getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .populate("barberId", "name email")       
-      .populate("serviceId", "name price");   
+       .populate("serviceIds", "name price");   
 
     res.json({
       message: "Appointments fetched successfully",
@@ -83,7 +83,7 @@ exports.getAppointmentById = async (req, res) => {
 
     const appointment = await Appointment.findById(id)
       .populate("barberId", "name email")
-      .populate("serviceId", "name price");
+       .populate("serviceIds", "name price");
 
     if (!appointment) {
       return res.status(404).json({ message: "Appointment not found" });

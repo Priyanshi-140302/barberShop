@@ -12,9 +12,12 @@ import CategoryMaster from "./Pages/CategoryMaster";
 import CategoryItemMaster from "./Pages/CategoryItemMaster";
 import Master from "./Pages/Master.jsx";
 import Appointments from "./Pages/Appoinments.jsx";
+import Services from "./Pages/Service.jsx";
+import Agent from "./Pages/Agent.jsx";
+import ShopSettingsPage from "./Pages/ShopSettings.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <BrowserRouter basename="/barber-admin">
+  <BrowserRouter basename="/salon-admin">
     <Routes>
       <Route path="/" element={<App />}>
         <Route path="/" element={<SignIn />} />
@@ -25,6 +28,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/master" element={<Master />} />
         <Route path="/category-master" element={<CategoryMaster />} />
         <Route path="/category-item-master" element={<CategoryItemMaster />} />
+        <Route path="/services" element={<Services/>} />
+        <Route path="/agents" element={<Agent/>} />
+        <Route path="/shop-settings" element={<ShopSettingsPage/>} />
       </Route>
     </Routes>
   </BrowserRouter>
