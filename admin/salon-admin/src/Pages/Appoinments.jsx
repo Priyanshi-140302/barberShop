@@ -61,8 +61,6 @@ const Appointments = () => {
     }
   };
 
-
-
   // ✅ Format date
   const formatDate = (dateStr, timeStr) => {
     const today = new Date();

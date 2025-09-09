@@ -16,7 +16,7 @@ const Sidebar = () => {
                                 src="assets/img/logo/logo.png"
                                 alt="logo not found"
                             /> */}
-                            <h2 className="">Barber<span className="text-danger">.</span></h2>
+                            <h2 className="">Salon<span className="text-danger">.</span></h2>
                         </Link>
                     </span>
                 </div>
@@ -53,7 +53,13 @@ const Sidebar = () => {
                                     <span className="nav-text">Shop-Settings</span>
                                 </Link>
                             </li>
-                            <li>
+                             <li>
+                                <Link to="/time-slots" aria-expanded="false">
+                                    <i className="fa-solid fa-calendar-check"></i>
+                                    <span className="nav-text">Time-Slots</span>
+                                </Link>
+                            </li>
+                            {/* <li>
                                 <Link to="/monthly-report" aria-expanded="false">
                                     <i className="fa-solid fa-calendar-alt"></i>
                                     <span className="nav-text">Monthly Report</span>
@@ -64,7 +70,7 @@ const Sidebar = () => {
                                     <i className="fa-solid fa-cogs"></i>
                                     <span className="nav-text">Master</span>
                                 </Link>
-                            </li>
+                            </li> */}
                         </ul>
 
                         <div className="sidebar__copyright position-absolute bottom-0 mb-2">

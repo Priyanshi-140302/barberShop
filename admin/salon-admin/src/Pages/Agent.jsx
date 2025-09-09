@@ -9,15 +9,21 @@ const Agent = () => {
   const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     name: "",
     experience: "",
     specialization: "",
     phone: "",
     email: "",
-    timeSlots: "",
-  });
+    timeSlots: [
+      {
+        date: "",
+        slots: [{ start: "", end: "" }],
+      },
+    ],
+  };
 
+  const [formData, setFormData] = useState(initialFormData);
   const [selectedBarber, setSelectedBarber] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -43,22 +49,62 @@ const Agent = () => {
     getBarbers();
   }, []);
 
-  // ✅ Handle Input
+  // ✅ Handle basic input
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Handle timeSlots input
+  const handleTimeSlotChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updated = [...prev.timeSlots];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, timeSlots: updated };
+    });
+  };
+
+  // ✅ Handle handleSlotChange input
+  const handleSlotChange = (tsIndex, slotIndex, field, value) => {
+    setFormData((prev) => {
+      const updated = [...prev.timeSlots];
+      const slots = [...updated[tsIndex].slots];
+      slots[slotIndex] = { ...slots[slotIndex], [field]: value };
+      updated[tsIndex] = { ...updated[tsIndex], slots };
+      return { ...prev, timeSlots: updated };
+    });
+  };
+
+
+  const addTimeSlot = () => {
+    setFormData({
+      ...formData,
+      timeSlots: [...formData.timeSlots, { date: "", slots: [{ start: "", end: "" }] }],
+    });
+  };
+
+  const removeTimeSlot = (index) => {
+    const slotsCopy = [...formData.timeSlots];
+    slotsCopy.splice(index, 1);
+    setFormData({ ...formData, timeSlots: slotsCopy });
+  };
+
+  const addSlot = (tsIndex) => {
+    const timeSlotsCopy = [...formData.timeSlots];
+    timeSlotsCopy[tsIndex].slots.push({ start: "", end: "" });
+    setFormData({ ...formData, timeSlots: timeSlotsCopy });
+  };
+
+  const removeSlot = (tsIndex, slotIndex) => {
+    const timeSlotsCopy = [...formData.timeSlots];
+    timeSlotsCopy[tsIndex].slots.splice(slotIndex, 1);
+    setFormData({ ...formData, timeSlots: timeSlotsCopy });
   };
 
   // ✅ Add Barber
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        ...formData,
-        timeSlots: formData.timeSlots
-          .split(",")
-          .map((slot) => slot.trim()), // convert string to array
-      };
-
+      const payload = { ...formData };
       const response = await fetch(
         "http://206.189.130.102:5001/api/v1/admin/barbers/create-barber",
         {
@@ -67,44 +113,46 @@ const Agent = () => {
           body: JSON.stringify(payload),
         }
       );
-
       if (!response.ok) throw new Error("Error creating barber");
 
       toast.success("Barber added successfully!");
       setShowAddModal(false);
-      setFormData({
-        name: "",
-        experience: "",
-        specialization: "",
-        phone: "",
-        email: "",
-        timeSlots: "",
-      });
+      setFormData(initialFormData);
       getBarbers();
     } catch (error) {
       toast.error("Failed to create barber!");
+      console.error(error);
     }
   };
 
   // ✅ Edit Barber
   const handleEdit = (barber) => {
     setSelectedBarber(barber);
+
+    // Normalize timeSlots
+    const normalizedTimeSlots = (barber.timeSlots || []).map((ts) => ({
+      date: ts.date || "", // fallback if missing
+      slots: (ts.slots && ts.slots.length ? ts.slots : [{ start: "", end: "" }]).map(
+        (s) => ({
+          start: s.start || "",
+          end: s.end || "",
+        })
+      ),
+    }));
+
     setFormData({
       ...barber,
-      timeSlots: barber.timeSlots.join(", "), // display as comma-separated string
+      timeSlots: normalizedTimeSlots.length ? normalizedTimeSlots : [{ date: "", slots: [{ start: "", end: "" }] }],
     });
+
     setShowEditModal(true);
   };
 
+
+
   const handleUpdate = async () => {
     try {
-      const payload = {
-        ...formData,
-        timeSlots: formData.timeSlots
-          .split(",")
-          .map((slot) => slot.trim()),
-      };
-
+      const payload = { ...formData };
       const response = await fetch(
         `http://206.189.130.102:5001/api/v1/admin/barbers/update-barber/${selectedBarber._id}`,
         {
@@ -118,8 +166,9 @@ const Agent = () => {
       toast.success("Barber updated successfully!");
       setShowEditModal(false);
       getBarbers();
-    } catch {
+    } catch (error) {
       toast.error("Error updating barber");
+      console.error(error);
     }
   };
 
@@ -128,17 +177,16 @@ const Agent = () => {
     if (!window.confirm("Are you sure you want to delete this barber?")) return;
     try {
       const response = await fetch(
-        `http://206.189.130.102:5001/api/v1/admin/barbers/delete-barber /${id}`,
-        {
-          method: "DELETE",
-        }
+        `http://206.189.130.102:5001/api/v1/admin/barbers/delete-barber/${id}`,
+        { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Error deleting barber");
 
       toast.success("Barber deleted!");
       getBarbers();
-    } catch {
+    } catch (error) {
       toast.error("Error deleting barber");
+      console.error(error);
     }
   };
 
@@ -151,8 +199,8 @@ const Agent = () => {
           <div className="page__body-wrapper">
             <Header />
 
+            {/* Breadcrumb */}
             <div className="app__slide-wrapper">
-              {/* Breadcrumb */}
               <div className="row">
                 <div className="col-xl-12">
                   <div className="breadcrumb__wrapper mb-35">
@@ -169,7 +217,7 @@ const Agent = () => {
                               </span>
                             </li>
                             <li className="active">
-                              <span>Barbers</span>
+                              <span>Agents</span>
                             </li>
                           </ul>
                         </nav>
@@ -179,17 +227,17 @@ const Agent = () => {
                 </div>
               </div>
 
-              {/* Barbers Table Card */}
+              {/* Barbers Table */}
               <div className="row g-20">
                 <div className="col-xl-12">
                   <div className="card__wrapper">
                     <div className="card__header d-flex justify-content-between align-items-center">
-                      <h4>Barber List</h4>
+                      <h4>Agent List</h4>
                       <button
                         className="btn btn-outline-danger"
                         onClick={() => setShowAddModal(true)}
                       >
-                        <i className="fa-solid fa-circle-plus me-2"></i>Add Barber
+                        <i className="fa-solid fa-circle-plus me-2"></i>Add Agent
                       </button>
                     </div>
                     <div
@@ -198,10 +246,7 @@ const Agent = () => {
                     >
                       {loading ? (
                         <div className="text-center py-3">
-                          <div
-                            className="spinner-border text-dark"
-                            role="status"
-                          ></div>
+                          <div className="spinner-border text-dark" role="status"></div>
                         </div>
                       ) : (
                         <table className="table table-hover mt-3">
@@ -228,8 +273,18 @@ const Agent = () => {
                                   <td>{barber.phone}</td>
                                   <td>{barber.email}</td>
                                   <td>
-                                    {barber.timeSlots &&
-                                      barber.timeSlots.map(slot => `${slot.start} - ${slot.end}`).join(", ")}
+                                    {barber.timeSlots && barber.timeSlots.length > 0 ? (
+                                      <>
+                                        {/* First date+slot */}
+                                        {`${barber.timeSlots[0].date}: ${barber.timeSlots[0].slots
+                                          .map(s => `${s.start}-${s.end}`)
+                                          .join(", ")}`}
+                                        {/* If more than 1 timeslot, show --- */}
+                                        {barber.timeSlots.length > 1 && " | ---"}
+                                      </>
+                                    ) : (
+                                      "---"
+                                    )}
                                   </td>
 
                                   <td>
@@ -237,15 +292,13 @@ const Agent = () => {
                                       className="btn btn-warning text-white rounded-5 me-2"
                                       onClick={() => handleEdit(barber)}
                                     >
-                                      Edit{" "}
-                                      <i className="fa-solid fa-pen ms-1"></i>
+                                      Edit <i className="fa-solid fa-pen ms-1"></i>
                                     </button>
                                     <button
                                       className="btn btn-danger rounded-5"
                                       onClick={() => handleDelete(barber._id)}
                                     >
-                                      Delete{" "}
-                                      <i className="fa-solid fa-trash-can ms-1"></i>
+                                      Delete <i className="fa-solid fa-trash-can ms-1"></i>
                                     </button>
                                   </td>
                                 </tr>
@@ -253,7 +306,7 @@ const Agent = () => {
                             ) : (
                               <tr>
                                 <td colSpan="8" className="text-center">
-                                  No barbers found
+                                  No agents found
                                 </td>
                               </tr>
                             )}
@@ -264,170 +317,150 @@ const Agent = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Add/Edit Modal */}
+              {(showAddModal || showEditModal) && (
+                <div className="modal show d-block" tabIndex="-1">
+                  <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title">
+                          {showAddModal ? "Add Barber" : "Edit Barber"}
+                        </h5>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          onClick={() => {
+                            showAddModal ? setShowAddModal(false) : setShowEditModal(false);
+                          }}
+                        ></button>
+                      </div>
+                      <div className="modal-body">
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            showAddModal ? handleSubmit(e) : handleUpdate();
+                          }}
+                        >
+                          <input
+                            type="text"
+                            name="name"
+                            placeholder="Name"
+                            className="form-control mb-3"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <input
+                            type="number"
+                            name="experience"
+                            placeholder="Experience (years)"
+                            className="form-control mb-3"
+                            value={formData.experience}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <input
+                            type="text"
+                            name="specialization"
+                            placeholder="Specialization"
+                            className="form-control mb-3"
+                            value={formData.specialization}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <input
+                            type="text"
+                            name="phone"
+                            placeholder="Phone"
+                            className="form-control mb-3"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <input
+                            type="email"
+                            name="email"
+                            placeholder="Email"
+                            className="form-control mb-3"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            required
+                          />
+
+                          <h6>Time Slots</h6>
+                          {formData.timeSlots.map((ts, i) => (
+                            <div key={i} className="mb-3 border p-2 rounded">
+                              <div className="d-flex align-items-center mb-2">
+                                <input
+                                  type="date"
+                                  value={ts.date}
+                                  onChange={(e) =>
+                                    handleTimeSlotChange(i, "date", e.target.value)
+                                  }
+                                  className="form-control me-2"
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => removeTimeSlot(i)}
+                                >
+                                  Remove Date
+                                </button>
+                              </div>
+                              {ts.slots.map((slot, j) => (
+                                <div key={j} className="d-flex mb-2">
+                                  <input
+                                    type="time"
+                                    value={slot.start}
+                                    onChange={(e) => handleSlotChange(i, j, "start", e.target.value)}
+                                    className="form-control me-2"
+                                    required
+                                  />
+                                  <input
+                                    type="time"
+                                    value={slot.end}
+                                    onChange={(e) => handleSlotChange(i, j, "end", e.target.value)}
+                                    className="form-control me-2"
+                                    required
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn btn-warning btn-sm"
+                                    onClick={() => removeSlot(i, j)}
+                                  >
+                                    Remove Slot
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                className="btn btn-success btn-sm"
+                                onClick={() => addSlot(i)}
+                              >
+                                Add Slot
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            className="btn btn-primary mb-3"
+                            onClick={addTimeSlot}
+                          >
+                            Add Another Date
+                          </button>
+
+                          <button type="submit" className="btn btn-danger">
+                            {showAddModal ? "Save" : "Update"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Add Modal */}
-            {showAddModal && (
-              <div className="modal show d-block" tabIndex="-1">
-                <div className="modal-dialog modal-lg">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h5 className="modal-title">Add Barber</h5>
-                      <button
-                        type="button"
-                        className="btn-close"
-                        onClick={() => setShowAddModal(false)}
-                      ></button>
-                    </div>
-                    <div className="modal-body">
-                      <form onSubmit={handleSubmit}>
-                        <input
-                          type="text"
-                          name="name"
-                          placeholder="Name"
-                          className="form-control mb-3"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="number"
-                          name="experience"
-                          placeholder="Experience (years)"
-                          className="form-control mb-3"
-                          value={formData.experience}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="specialization"
-                          placeholder="Specialization"
-                          className="form-control mb-3"
-                          value={formData.specialization}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="phone"
-                          placeholder="Phone"
-                          className="form-control mb-3"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="email"
-                          name="email"
-                          placeholder="Email"
-                          className="form-control mb-3"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="timeSlots"
-                          placeholder="Enter time slots (comma separated, e.g. 10:00, 11:00)"
-                          className="form-control mb-3"
-                          value={formData.timeSlots}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <button type="submit" className="btn btn-danger">
-                          Save
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Edit Modal */}
-            {showEditModal && (
-              <div className="modal show d-block" tabIndex="-1">
-                <div className="modal-dialog modal-lg">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h5 className="modal-title">Edit Barber</h5>
-                      <button
-                        type="button"
-                        className="btn-close"
-                        onClick={() => setShowEditModal(false)}
-                      ></button>
-                    </div>
-                    <div className="modal-body">
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleUpdate();
-                        }}
-                      >
-                        <input
-                          type="text"
-                          name="name"
-                          placeholder="Name"
-                          className="form-control mb-3"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="number"
-                          name="experience"
-                          placeholder="Experience (years)"
-                          className="form-control mb-3"
-                          value={formData.experience}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="specialization"
-                          placeholder="Specialization"
-                          className="form-control mb-3"
-                          value={formData.specialization}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="phone"
-                          placeholder="Phone"
-                          className="form-control mb-3"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="email"
-                          name="email"
-                          placeholder="Email"
-                          className="form-control mb-3"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="timeSlots"
-                          placeholder="Enter time slots (comma separated)"
-                          className="form-control mb-3"
-                          value={formData.timeSlots}
-                          onChange={handleInputChange}
-                          required
-                        />
-                        <button type="submit" className="btn btn-danger">
-                          Update
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -1,26 +1,98 @@
-import React, { useState } from 'react';
-import Sidebar from '../Components/Sidebar';
-import Header from '../Components/Header';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import Sidebar from "../Components/Sidebar";
+import Header from "../Components/Header";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const [dashboardDetail] = useState({
-    total_customers: 120,
-    total_appointments_today: 18,
-    total_appointments_week: 85,
-    total_revenue_month: 45000,
-    active_barbers: 5,
-    upcoming_appointments: [
-      { id: 1, service: 'Haircut - Classic Style', customer_name: 'Riya Sharma', appointment_date: '2025-09-05 10:30 AM', barber: 'John', mobile: '9876543210' },
-      { id: 2, service: 'Beard Trim - Wedding Special', customer_name: 'Arjun Patel', appointment_date: '2025-09-05 11:15 AM', barber: 'David', mobile: '9876543211' },
-      { id: 3, service: 'Hair Color - Highlight', customer_name: 'Priya Verma', appointment_date: '2025-09-05 12:00 PM', barber: 'Alex', mobile: '9876543212' },
-    ],
-    recent_customers: [
-      { id: 1, name: 'Riya Sharma', mobile: '9876543210' },
-      { id: 2, name: 'Arjun Patel', mobile: '9876543211' },
-      { id: 3, name: 'Priya Verma', mobile: '9876543212' },
-    ]
+  const [dashboardDetail, setDashboardDetail] = useState({
+    total_customers: 0,
+    total_appointments: 0,
+    total_holidays: 0,
+    total_services: 0,
+    active_barbers: 0,
+    upcoming_appointments: [],
+    recent_customers: [],
   });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // 1. Total Customers
+        const resCustomers = await fetch(
+          "http://206.189.130.102:5001/api/v1/admin/appointments/total-appointments"
+        );
+        const { totalCustomers } = await resCustomers.json();
+
+        // 2. Total Holidays
+        const resHolidays = await fetch(
+          "http://206.189.130.102:5001/api/v1/admin/shop/get-total-monthly-holidays"
+        );
+        const { totalHolidays } = await resHolidays.json();
+
+        // 3. Total Barbers
+        const resBarbers = await fetch(
+          "http://206.189.130.102:5001/api/v1/admin/barbers/total-barbers"
+        );
+        const { totalBarbers } = await resBarbers.json();
+
+        // 4. Total Services
+        const resServices = await fetch(
+          "http://206.189.130.102:5001/api/v1/admin/services/total-services"
+        );
+        const { totalServices } = await resServices.json();
+
+        // 5. All Appointments (for total + upcoming + customers)
+        const resAllAppointments = await fetch(
+          "http://206.189.130.102:5001/api/v1/admin/appointments/get-appointments"
+        );
+        const { appointments } = await resAllAppointments.json();
+
+        const totalAppointments = appointments.length;
+
+        // ✅ Upcoming appointments (nearest 5)
+        const upcomingAppointments = [...appointments]
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(0, 5)
+          .map((a) => ({
+            id: a._id,
+            customer_name: a.name,
+            service: a.serviceIds?.map((s) => s.name).join(", ") || "N/A",
+            barber: a.barberId?.name || "N/A",
+            appointment_date: `${new Date(a.date).toLocaleDateString()} ${a.time}`,
+            mobile: a.mobile,
+          }));
+
+        // ✅ Recent customers (unique last 5)
+        const uniqueCustomers = [];
+        const recentCustomers = [];
+        for (let app of [...appointments].reverse()){
+          if (!uniqueCustomers.includes(app.mobile)) {
+            uniqueCustomers.push(app.mobile);
+            recentCustomers.push({
+              id: app._id,
+              name: app.name,
+              mobile: app.mobile,
+            });
+          }
+          if (recentCustomers.length >= 5) break;
+        }
+
+        setDashboardDetail({
+          total_customers: totalCustomers,
+          total_appointments: totalAppointments,
+          total_holidays: totalHolidays,
+          total_services: totalServices,
+          active_barbers: totalBarbers,
+          upcoming_appointments: upcomingAppointments,
+          recent_customers: recentCustomers,
+        });
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="container-fluid p-0">
@@ -36,12 +108,20 @@ const Dashboard = () => {
                 <div className="col-xl-12">
                   <div className="breadcrumb__wrapper mb-35">
                     <div className="breadcrumb__inner">
-                      <div className="breadcrumb__icon"><i className="flaticon-home"></i></div>
+                      <div className="breadcrumb__icon">
+                        <i className="flaticon-home"></i>
+                      </div>
                       <div className="breadcrumb__menu">
                         <nav>
                           <ul>
-                            <li><span><Link to="/dashboard">Home</Link></span></li>
-                            <li className="active"><span>Dashboard</span></li>
+                            <li>
+                              <span>
+                                <Link to="/dashboard">Home</Link>
+                              </span>
+                            </li>
+                            <li className="active">
+                              <span>Dashboard</span>
+                            </li>
                           </ul>
                         </nav>
                       </div>
@@ -52,30 +132,19 @@ const Dashboard = () => {
 
               {/* Summary Cards */}
               <div className="row g-20">
+                {/* Total Appointments */}
                 <div className="col-xl-3 col-lg-6 col-md-6">
-                  <Link to="/customers">
+                  <Link to="/appoinments">
                     <div className="Expovent__count-item mb-20 hover-card">
-                      <div className="Expovent__count-thumb include__bg transition-3"
-                        style={{ backgroundImage: `url(assets/img/bg/count-bg.png)` }}></div>
+                      <div
+                        className="Expovent__count-thumb include__bg transition-3"
+                        style={{
+                          backgroundImage: `url(assets/img/bg/count-bg.png)`,
+                        }}
+                      ></div>
                       <div className="Expovent__count-content">
-                        <h3>{dashboardDetail.total_customers}</h3>
-                        <span>Total Customers</span>
-                      </div>
-                      <div className="Expovent__count-icon">
-                        <i className="fa-solid fa-users"></i>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-
-                <div className="col-xl-3 col-lg-6 col-md-6">
-                  <Link to="/appointments">
-                    <div className="Expovent__count-item mb-20 hover-card">
-                      <div className="Expovent__count-thumb include__bg transition-3"
-                        style={{ backgroundImage: `url(assets/img/bg/count-bg.png)` }}></div>
-                      <div className="Expovent__count-content">
-                        <h3>{dashboardDetail.total_appointments_today} / {dashboardDetail.total_appointments_week}</h3>
-                        <span>Appointments (Today / This Week)</span>
+                        <h3>{dashboardDetail.total_appointments}</h3>
+                        <span>Total Appointments</span>
                       </div>
                       <div className="Expovent__count-icon">
                         <i className="fa-solid fa-calendar-check"></i>
@@ -84,33 +153,66 @@ const Dashboard = () => {
                   </Link>
                 </div>
 
+                {/* Total Services */}
                 <div className="col-xl-3 col-lg-6 col-md-6">
-                  <div className="Expovent__count-item mb-20 hover-card">
-                    <div className="Expovent__count-thumb include__bg transition-3"
-                      style={{ backgroundImage: `url(assets/img/bg/count-bg.png)` }}></div>
-                    <div className="Expovent__count-content">
-                      <h3>₹{dashboardDetail.total_revenue_month}</h3>
-                      <span>Revenue (This Month)</span>
+                  <Link to="/services">
+                    <div className="Expovent__count-item mb-20 hover-card">
+                      <div
+                        className="Expovent__count-thumb include__bg transition-3"
+                        style={{
+                          backgroundImage: `url(assets/img/bg/count-bg.png)`,
+                        }}
+                      ></div>
+                      <div className="Expovent__count-content">
+                        <h3>{dashboardDetail.total_services}</h3>
+                        <span>Total Services</span>
+                      </div>
+                      <div className="Expovent__count-icon">
+                        <i className="fa-solid fa-scissors"></i>
+                      </div>
                     </div>
-                    <div className="Expovent__count-icon">
-                      <i className="fa-solid fa-coins"></i>
-                    </div>
-                  </div>
+                  </Link>
                 </div>
 
+                {/* Total agents */}
                 <div className="col-xl-3 col-lg-6 col-md-6">
-                  <Link to="/barbers">
+                  <Link to="/agents">
                     <div className="Expovent__count-item mb-20 hover-card">
-                      <div className="Expovent__count-thumb include__bg transition-3"
-                        style={{ backgroundImage: `url(assets/img/bg/count-bg.png)` }}></div>
+                      <div
+                        className="Expovent__count-thumb include__bg transition-3"
+                        style={{
+                          backgroundImage: `url(assets/img/bg/count-bg.png)`,
+                        }}
+                      ></div>
                       <div className="Expovent__count-content">
                         <h3>{dashboardDetail.active_barbers}</h3>
-                        <span>Active Barbers</span>
+                        <span>Total Agents</span>
                       </div>
                       <div className="Expovent__count-icon">
                         <i className="fa-solid fa-user-tie"></i>
                       </div>
                     </div>
+                  </Link>
+                </div>
+
+                {/* Total Holidays */}
+                <div className="col-xl-3 col-lg-6 col-md-6">
+                  <Link to={'/shop-settings'}>
+                  <div className="Expovent__count-item mb-20 hover-card">
+                    <div
+                      className="Expovent__count-thumb include__bg transition-3"
+                      style={{
+                        backgroundImage: `url(assets/img/bg/count-bg.png)`,
+                      }}
+                    ></div>
+                    <div className="Expovent__count-content">
+                      <h3>{dashboardDetail.total_holidays}</h3>
+                      <span>Total Holidays</span>
+                    </div>
+                    <div className="Expovent__count-icon">
+                      <i className="fa-solid fa-umbrella-beach"></i>
+                    </div>
+                  </div>
                   </Link>
                 </div>
               </div>
@@ -119,19 +221,24 @@ const Dashboard = () => {
               <div className="row g-20">
                 <div className="col-xl-6">
                   <div className="card__wrapper">
-                    <div className="card__header"><h4>Upcoming Appointments</h4></div>
-                    <div className="card-body scroll-w-1 card__scroll overflow-auto" style={{ maxHeight: '300px' }}>
+                    <div className="card__header">
+                      <h4>Upcoming Appointments</h4>
+                    </div>
+                    <div
+                      className="card-body scroll-w-1 card__scroll overflow-auto"
+                      style={{ maxHeight: "300px" }}
+                    >
                       <table className="table mb-0 mt-3">
                         <thead>
                           <tr>
                             <th>Customer</th>
                             <th>Service</th>
-                            <th>Barber</th>
+                            <th>Agent</th>
                             <th>Time</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {dashboardDetail.upcoming_appointments.map(app => (
+                          {dashboardDetail.upcoming_appointments.map((app) => (
                             <tr key={app.id}>
                               <td>{app.customer_name}</td>
                               <td>{app.service}</td>
@@ -147,8 +254,13 @@ const Dashboard = () => {
 
                 <div className="col-xl-6">
                   <div className="card__wrapper">
-                    <div className="card__header"><h4>Recent Customers</h4></div>
-                    <div className="card-body scroll-w-1 card__scroll overflow-auto" style={{ maxHeight: '300px' }}>
+                    <div className="card__header">
+                      <h4>Recent Customers</h4>
+                    </div>
+                    <div
+                      className="card-body scroll-w-1 card__scroll overflow-auto"
+                      style={{ maxHeight: "300px" }}
+                    >
                       <table className="table mb-0 mt-3">
                         <thead>
                           <tr>
@@ -157,7 +269,7 @@ const Dashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {dashboardDetail.recent_customers.map(c => (
+                          {dashboardDetail.recent_customers.map((c) => (
                             <tr key={c.id}>
                               <td>{c.name}</td>
                               <td>{c.mobile}</td>
@@ -171,14 +283,22 @@ const Dashboard = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="row g-20 mt-4">
+              {/* <div className="row g-20 mt-4">
                 <div className="col-xl-12 d-flex gap-3">
-                  <Link to="/appointments/add" className="btn btn-outline-danger">Add Appointment</Link>
-                  <Link to="/barbers/add" className="btn btn-outline-danger">Add Barber</Link>
-                  <Link to="/services/add" className="btn btn-outline-danger">Add Service</Link>
+                  <Link
+                    to="/appointments/add"
+                    className="btn btn-outline-danger"
+                  >
+                    Add Appointment
+                  </Link>
+                  <Link to="/agents" className="btn btn-outline-danger">
+                    Add Agents
+                  </Link>
+                  <Link to="/services" className="btn btn-outline-danger">
+                    Add Service
+                  </Link>
                 </div>
-              </div>
-
+              </div> */}
             </div>
           </div>
         </div>

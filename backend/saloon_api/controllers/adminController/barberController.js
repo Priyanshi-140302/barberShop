@@ -82,7 +82,20 @@ exports.getBarberById = async (req, res) => {
 exports.updateBarber = async (req, res) => {
   try {
     const barberId = req.params.id;
-    const updates = req.body; // may contain `timeSlots`
+    const { name, experience, specialization, phone, email, timeSlots } = req.body;
+
+    const updates = {
+      name,
+      experience,
+      specialization,
+      phone,
+      email,
+    };
+
+    // ✅ Agar frontend se proper array aaya hai
+    if (timeSlots && Array.isArray(timeSlots)) {
+      updates.timeSlots = timeSlots; // directly assign kar do
+    }
 
     const updatedBarber = await Barber.findByIdAndUpdate(barberId, updates, { new: true });
     if (!updatedBarber) {
@@ -91,10 +104,11 @@ exports.updateBarber = async (req, res) => {
 
     res.status(200).json({ message: "Barber updated successfully", barber: updatedBarber });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Failed to update barber", error: error.message });
   }
 };
+
 
 
 exports.deleteBarber = async (req, res) => {
@@ -135,5 +149,23 @@ exports.setBarberSlotsByDate = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to set slots", error: err.message });
+  }
+};
+
+// Get total barbers
+exports.getTotalBarbers = async (req, res) => {
+  try {
+    const totalBarbers = await Barber.countDocuments();
+
+    res.status(200).json({
+      message: "Total barbers fetched successfully",
+      totalBarbers
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch total barbers",
+      error: error.message
+    });
   }
 };

@@ -28,3 +28,35 @@ exports.getSettings = async (req, res) => {
     res.status(500).json({ message: "Error fetching settings", error: error.message });
   }
 };
+
+//get-total-monthly-holidays
+exports.getMonthlyHolidays = async (req, res) => {
+  try {
+    const settings = await ShopSetting.findOne();
+    if (!settings || !settings.holidays) {
+      return res.json({ message: "No holidays found", totalHolidays: 0, holidays: [] });
+    }
+
+    // ✅ Current month & year
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0 = Jan
+    const currentYear = now.getFullYear();
+
+    // ✅ Filter holidays for this month only
+    const monthlyHolidays = settings.holidays.filter(holiday => {
+      const holidayDate = new Date(holiday.date);
+      return (
+        holidayDate.getMonth() === currentMonth &&
+        holidayDate.getFullYear() === currentYear
+      );
+    });
+
+    res.json({
+      message: "Monthly holidays fetched successfully",
+      totalHolidays: monthlyHolidays.length,
+      holidays: monthlyHolidays
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching monthly holidays", error: error.message });
+  }
+};

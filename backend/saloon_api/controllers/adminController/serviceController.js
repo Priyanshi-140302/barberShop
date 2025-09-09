@@ -72,3 +72,20 @@ exports.deleteService = async (req, res) => {
     res.status(500).json({ message: "Error deleting service", error });
   }
 }
+
+// ✅ Get Total Services
+exports.getTotalServices = async (req, res) => {
+  try {
+    const totalServices = await Service.countDocuments();
+
+    res.status(200).json({
+      message: "Total services fetched successfully",
+      totalServices
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching total services",
+      error: error.message
+    });
+  }
+};

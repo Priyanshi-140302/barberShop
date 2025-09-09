@@ -97,3 +97,25 @@ exports.getAppointmentById = async (req, res) => {
     res.status(500).json({ message: "Error fetching appointment", error: error.message });
   }
 };
+
+
+// ✅ Total Unique Customers API (excluding canceled)
+exports.getTotalCustomers = async (req, res) => {
+  try {
+    // Find all non-canceled appointments
+    const appointments = await Appointment.find({ status: { $ne: "canceled" } });
+
+    // Extract unique customer identifiers (using name + mobile as identifier)
+    const uniqueCustomers = new Set(
+      appointments.map(appt => `${appt.name}-${appt.mobile}`)
+    );
+
+    res.json({
+      message: "Total customers fetched successfully",
+      totalCustomers: uniqueCustomers.size,
+      customers: [...uniqueCustomers]  // Optional: send customer list
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching total customers", error: error.message });
+  }
+};

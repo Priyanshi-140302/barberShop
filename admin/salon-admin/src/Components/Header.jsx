@@ -16,7 +16,7 @@ const Header = () => {
                                     alt="logo not found"
                                     style={{ width: '70px' }}
                                 /> */}
-                                <h2 className="">Barber<span className="text-danger">.</span></h2>
+                                <h2 className="">Salon<span className="text-danger">.</span></h2>
                             </Link>
                         </span>
                     </div>
@@ -57,7 +57,7 @@ const Header = () => {
                                                     alt="logo not found"
                                                     style={{ width: '70px' }}
                                                 /> */}
-                                                <h2 className="">Barber<span className="text-danger">.</span></h2>
+                                                <h2 className="">Salon<span className="text-danger">.</span></h2>
                                             </Link>
                                         </span>
                                     </h5>
@@ -92,7 +92,7 @@ const Header = () => {
                                                         <span className="nav-text">Appoinments</span>
                                                     </Link>
                                                 </li>
-                                                <li>
+                                                {/* <li>
                                                     <Link to="/monthly-report" aria-expanded="false">
                                                         <i className="fa-solid fa-calendar-alt"></i>
                                                         <span className="nav-text">Monthly Report</span>
@@ -103,7 +103,7 @@ const Header = () => {
                                                         <i className="fa-solid fa-cogs"></i>
                                                         <span className="nav-text">Master</span>
                                                     </Link>
-                                                </li>
+                                                </li> */}
                                                 <li>
                                                     <Link to="/">
                                                         <i className="fa-solid fa-arrow-right-from-bracket"></i>

@@ -80,7 +80,7 @@ const Home = () => {
         setLoadingSlots(true);
 
         const res = await fetch(
-          "http://localhost:5001/api/v1/users/appointments/get-timeslots",
+          "http://206.189.130.102:5001/api/v1/users/appointments/get-timeslots",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -153,7 +153,7 @@ const Home = () => {
     console.log("📤 Booking payload:", payload);
 
     try {
-      const res = await fetch("http://localhost:5001/api/v1/users/appointments/book-appointment", {
+      const res = await fetch("http://206.189.130.102:5001/api/v1/users/appointments/book-appointment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -299,7 +299,7 @@ const Home = () => {
 
                         {/* Barber */}
                         <div className="col-12 mb-4">
-                          <label className="mb-2">Select Barber</label>
+                          <label className="mb-2">Select Agent</label>
                           <select className="form-select" value={barberId} onChange={(e) => setBarberId(e.target.value)}>
                             {barbers.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
                           </select>

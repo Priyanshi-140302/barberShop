@@ -15,6 +15,7 @@ import Appointments from "./Pages/Appoinments.jsx";
 import Services from "./Pages/Service.jsx";
 import Agent from "./Pages/Agent.jsx";
 import ShopSettingsPage from "./Pages/ShopSettings.jsx";
+import  TimeSlots from "./Pages/TimeSlots.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter basename="/salon-admin">
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/services" element={<Services/>} />
         <Route path="/agents" element={<Agent/>} />
         <Route path="/shop-settings" element={<ShopSettingsPage/>} />
+        <Route path="/time-slots" element={<TimeSlots/>} />
       </Route>
     </Routes>
   </BrowserRouter>
